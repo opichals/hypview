@@ -1,18 +1,20 @@
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>
     HYPView (an emscripten showcase) v0.1
   </title>
   <style type="text/css">
     .body { margin-top:0px; margin-left:2ex; }
-     .menuDiv { width:78ex; height: 24px; }
+     .menu { position:fixed; background-color:#ffffff; padding-top: 2px; top:0em; width:78ex; height: 26px; z-index:999; }
       .search { position:relative; top:-6px; }
-     .outerDiv { position:relative; top:-1ex; height:100%; width:100% }
-      .svgDiv   { position:absolute; top:".$svgpos."px; left:-1ex; z-index:998; }
-      .imgDiv   { position:absolute; top:0em; }
-      .imgCenter{ position:absolute; top:0em; text-align:center; margin:0 auto; width:78ex; }
-      .content  { position:absolute; top:0em; left:0ex; z-index:999; }
-      .content > div > pre  { margin:0 }
+     .node { position:relative; margin-top:32px; height:100%; width:100% }
+     .anchor {                  padding-top:32px; margin-top:-32px; }
+      .gfx { position:absolute; top:0em; left:-1ex; z-index:997; }
+      .txt { position:absolute; top:0em; left:0ex; z-index:998; }
+      .img { position:absolute; top:0em; }
+      .imgCenter { position:absolute; top:0em; text-align:center; margin:0 auto; width:78ex; }
+      pre { margin:0 }
       .icon {
         width: 32px;
         height: 24px;
@@ -34,26 +36,69 @@
     }
   </style>
 
-  <script src="hypview.js"></script>
+  <script type="text/javascript" src="dehyp.js"></script>
+  <script type="text/javascript" src="hypview.js"></script>
 
   <script type="text/javascript">
     var hypfile = 'tos.hyp';
+
+    var stdout = [''];
+    Module.preRun = function() {
+        function stdoutHandler(code) {
+            stdout[stdout.length-1] += String.fromCharCode(code>=0?code:256+code);
+            if (code == '\n'.charCodeAt(0)) {
+                stdout.push('');
+            }
+        }
+
+        FS.init(null, stdoutHandler, null);
+    };
+
+    // decompress the .HYP file node (idx)
+    function dehyp(filename, idx, isImage) {
+        stdout = [''];
+        Module.callMain([filename, ''+idx]);
+        console.log('dehyp', idx);
+
+        if (isImage) {
+            let pngRawData = FS.readFile('dehyp.png', { encoding: 'binary' });
+            var blob = new Blob( [ pngRawData ], { type: "image/png" } );
+            return URL.createObjectURL( blob );
+        }
+        return stdout;
+    }
+
+    function hypview(filename, idx, lineNumber) {
+        var lines = dehyp(filename, idx);
+        hypfile = filename;
+
+        lines.join('').replace(/<!--\/?refs.*?"(.*?)"-->/g, function(m, refs) {
+            // update the menu icon indexes
+            refs.split(/&/).map(function(arg) {
+                var name_value = arg.split(/=/);
+                document.getElementById('ref_'+name_value[0]).href = "#index=" + name_value[1];
+            });
+            return '';
+        });
+
+        document.getElementById('output').innerHTML = htmllify(lines, lineNumber);
+
+        let anchor = document.getElementsByName('line'+lineNumber);
+        anchor && anchor[0] && anchor[0].scrollIntoView();
+    }
 
     // FileReader (allows local file access)
     function handle_files(files) {
         for (i = 0; i < files.length; i++) {
             var file = files[i];
-            console.log('File: ', file);
             var reader = new FileReader();
             ret = [];
             reader.onload = function(e) {
-                console.log('Done: ', e);
-
                 // create emscripten filesystem file entry
-                FS.createDataFile('/cache', file.name, e.target.result, true, false);
+                FS.createDataFile('/', file.name, e.target.result, true, false);
                 hypfile = file.name;
 
-                dehyp(hypfile, 0);
+                hypview(hypfile, 0, 0);
             };
             reader.onerror = function(stuff) {
                 console.log("error", stuff, stuff.toString(), stuff.getMessage && stuff.getMessage());
@@ -62,48 +107,16 @@
         }
     }
 
-    // create emscripten filesystem entries
-    FS.createPath('/', 'cache', true, true);
-    [].forEach(function(datafile) {
-      FS.createLazyFile('/cache', datafile, 'cache/' + datafile, true, false);
-    });
-
-    // print function which the runtime will call
-    var s;
-    function print(text) {
-      s+=text + "\n";
-    }
-
-    // decompress the .HYP file node (idx)
-    function dehyp(filename, idx) {
-        s = '';
-        run(['cache/'+filename, ''+idx]);
-
-        console.log('dehyp', idx);
-        s = s.replace(/<!--(\/?a.*?)-->/g, '<$1>');
-        s = s.replace(/<!--\/?refs.*?"(.*?)"-->/g, function(m, refs) {
-            // update the menu icon indexes
-            refs.split(/&/).map(function(arg) {
-                var name_value = arg.split(/=/);
-                document.getElementById('ref_'+name_value[0]).href = "#index=" + name_value[1];
-            });
-            return '';
-        });
-        s = s.replace(/<a\s+href="(.*?)"/g, '<a href="#$1"');
-        // s = s.replace(/<!--(.*?)-->/g, '<$1>');
-        document.getElementById('output').innerHTML = s;
-        return s;
-    }
-
     // link navigation
     window.onhashchange = function(e) {
-        var index = e.newURL.match(/index=(\d+)/)[1];
-        dehyp(hypfile, index);
+        var index = e.newURL.match(/index=(\d+)/);
+        var lineNumber = e.newURL.match(/line=(\d+)/);
+        hypview(hypfile, index && index[1], lineNumber && lineNumber[1]);
     };
   </script>
 </head>
 <body>
-  <div class="menuDiv">
+  <div class="menu">
       <form action="" method="GET">
         <a id="ref_back" href="javascript: history.go(-1)"><div class="icon"></div></a>
         <a id="ref_prev" href="#index=0" accesskey="p" rel="prev"><div class="icon"></div></a>
@@ -123,7 +136,33 @@
         -->
       </form>
   </div>
-  <pre id="output"></pre>
+
+  <div class="node">
+      <span id="width" style="font-family: monospace; visibility: hidden">12345678901234567890123456789012345678901234567890123456789012345678901234</span>
+      <div class="gfx">
+          <svg id="svg" version="1.1" baseProfile="tiny" width="74ex" height="100em" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+              <defs>
+                  <marker id="arrowbeg" viewBox="0 0 10 20" refX="2" refY="10" markerUnits="strokeWidth" markerWidth="15" markerHeight="15" orient="auto">
+                      <path d="M 0 10 L 10 0 M 0 10 L 10 20" fill="black" stroke="black"/>
+                  </marker>
+                  <marker id="arrowend" viewBox="0 0 10 20" refX="8" refY="10" markerUnits="strokeWidth" markerWidth="15" markerHeight="15" orient="auto">
+                      <path d="M 10 10 L 0 0 M 10 10 L 0 20" fill="black" stroke="black"/>
+                  </marker>
+              </defs>
+                  <!-- generated graphics -->
+              <g stroke="black" stroke-width="0.05" id="graphics">
+              </g>
+          </svg>
+      </div>
+
+      <div class="txt">
+          <pre id="output"></pre>
+      </div>
+  </div>
+
+  <script type="text/javascript">
+    hyp_width = document.getElementById('width').getBoundingClientRect().width - 1;
+  </script>
 </body>
 </html>
 
