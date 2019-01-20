@@ -1774,7 +1774,7 @@ function _emscripten_asm_const_i(code) {
 
 STATIC_BASE = GLOBAL_BASE;
 
-STATICTOP = STATIC_BASE + 35584;
+STATICTOP = STATIC_BASE + 35792;
 /* global initializers */  __ATINIT__.push();
 
 
@@ -1783,7 +1783,7 @@ STATICTOP = STATIC_BASE + 35584;
 
 
 
-var STATIC_BUMP = 35584;
+var STATIC_BUMP = 35792;
 Module["STATIC_BASE"] = STATIC_BASE;
 Module["STATIC_BUMP"] = STATIC_BUMP;
 
@@ -5186,9 +5186,9 @@ function nullFunc_viiii(x) { err("Invalid function pointer called with signature
 
 function nullFunc_viiiiiiiii(x) { err("Invalid function pointer called with signature 'viiiiiiiii'. Perhaps this is an invalid value (e.g. caused by calling a virtual method on a NULL pointer)? Or calling a function with an incorrect type, which will fail? (it is worth building your source files with -Werror (warnings are errors), as warnings can indicate undefined behavior which can cause this)");  err("Build with ASSERTIONS=2 for more info.");abort(x) }
 
-Module['wasmTableSize'] = 320;
+Module['wasmTableSize'] = 336;
 
-Module['wasmMaxTableSize'] = 320;
+Module['wasmMaxTableSize'] = 336;
 
 function invoke_ii(index,a1) {
   var sp = stackSave();
