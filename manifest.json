@@ -1,0 +1,42 @@
+{
+  "short_name": "hypview",
+  "name": "HYPView, ST-Guide Hypertext Viewer",
+  "description": "ST-Guide Hypertext File Viewer",
+  "author": "Standa Opichal / JAY Software",
+  "homepage_url": "https://github.com/opichals/hypview",
+  "display": "minimal-ui",
+  "icons": [
+    {
+      "src": "favicon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "favicon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/hypview/?source=pwa",
+  "file_handlers": [
+    {
+      "action": "/hypview/",
+      "accept": {
+        "application/octet-stream": [".hyp"]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/hypview/?web-share-target",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "file",
+          "accept": ["application/octet-stream", ".hyp"]
+        }
+      ]
+    }
+  }
+}
