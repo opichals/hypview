@@ -1,4 +1,4 @@
-const version = 'v0.0.1';
+const version = 'v0.0.2';
 
 self.addEventListener('install', function (event) {
   event.waitUntil(
@@ -22,6 +22,7 @@ self.addEventListener('install', function (event) {
         'image/iload.png',
         'image/iback.png',
         'image/ix.png',
+        'image/github.png',
       ]);
     })
   );
