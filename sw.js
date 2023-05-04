@@ -1,4 +1,4 @@
-const version = 'v0.0.2';
+const version = 'v0.0.4';
 
 self.addEventListener('install', function (event) {
   event.waitUntil(
@@ -6,6 +6,8 @@ self.addEventListener('install', function (event) {
       return cache.addAll([
         'index.html',
         'hypview.js',
+        'lha.js',
+        'uzip.js',
         'dehyp.js',
         'dehyp.wasm',
         'image/ikat.png',
